@@ -8,21 +8,7 @@ import (
 	"bazil.org/fuse/fs"
 )
 
-var (
-	newInode chan uint64
-)
-
 func mount(point string) {
-
-	// init inode generator
-	newInode = make(chan uint64)
-	go func() {
-		var counter uint64 = 2 // start with 2, 1 is dir root
-		for {
-			newInode <- counter
-			counter += 1
-		}
-	}()
 
 	// startup mount
 	c, err := fuse.Mount(point)
