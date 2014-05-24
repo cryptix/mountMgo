@@ -16,5 +16,5 @@ func checkFatal(err error) {
 
 func logErr(err error) {
 	_, file, line, _ := runtime.Caller(1)
-	fmt.Fprintf(os.Stderr, "Error from <%s:%d>\nError:%s", file, line, err)
+	fmt.Fprintf(os.Stderr, "Error from <%s:%d>\nError:%s\n", file, line, err)
 }
