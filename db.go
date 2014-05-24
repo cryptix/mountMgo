@@ -37,7 +37,7 @@ func initDb(dbHost, dbName string) {
 		collections[name] = &CollFile{
 			Name: name,
 			Fattr: fuse.Attr{
-				Mode:  os.ModeDir | 0444,
+				Mode:  os.ModeDir | 0400,
 				Ctime: now,
 				Atime: now,
 				Mtime: now,

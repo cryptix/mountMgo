@@ -76,25 +76,10 @@ func (Dir) Lookup(name string, intr fs.Intr) (fs.Node, fuse.Error) {
 func (d Dir) ReadDir(intr fs.Intr) ([]fuse.Dirent, fuse.Error) {
 	log.Println("Dir.ReadDir():", d.name)
 
-	if d.name != "Root" {
-		// list contents of collection
-		return nil, fuse.ENOENT
-	}
+	ents := make([]fuse.Dirent, 0, len(collections))
 
-	// list collections
-	db, s := getDb()
-	defer s.Close()
-
-	colls, err := db.CollectionNames()
-	if err != nil {
-		logErr(err)
-		return nil, fuse.EIO
-	}
-
-	ents := make([]fuse.Dirent, 0, len(colls))
-
-	for _, c := range colls {
-		ents = append(ents, fuse.Dirent{Name: c, Type: fuse.DT_Dir})
+	for name, _ := range collections {
+		ents = append(ents, fuse.Dirent{Name: name, Type: fuse.DT_Dir})
 	}
 	return ents, nil
 }

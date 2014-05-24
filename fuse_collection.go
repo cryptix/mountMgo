@@ -1,16 +1,12 @@
 package main
 
 import (
-	"labix.org/v2/mgo/bson"
 	"log"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
+	"labix.org/v2/mgo/bson"
 )
-
-type genericFile struct {
-	Id bson.ObjectId `bson:"_id"`
-}
 
 // CollFile implements both Node and Handle for a collection.
 type CollFile struct {
@@ -29,19 +25,23 @@ func (f CollFile) Attr() fuse.Attr {
 func (c CollFile) Lookup(fname string, intr fs.Intr) (fs.Node, fuse.Error) {
 	log.Printf("CollFile[%s].Lookup(): %s\n", c.Name, fname)
 
+	if !bson.IsObjectIdHex(fname) {
+		return nil, fuse.ENOENT
+	}
+
 	db, s := getDb()
 	defer s.Close()
 
-	var f interface{}
+	var f DocumentFile
 	err := db.C(c.Name).FindId(bson.ObjectIdHex(fname)).One(&f)
 	if err != nil {
 		logErr(err)
 		return nil, fuse.EIO
 	}
 
-	log.Printf("Contents: %+v\n", f)
+	f.coll = c.Name
 
-	return nil, fuse.ENOENT
+	return f, nil
 }
 
 func (c CollFile) ReadDir(intr fs.Intr) (ents []fuse.Dirent, ferr fuse.Error) {
@@ -50,9 +50,9 @@ func (c CollFile) ReadDir(intr fs.Intr) (ents []fuse.Dirent, ferr fuse.Error) {
 	db, s := getDb()
 	defer s.Close()
 
-	iter := db.C(c.Name).Find(nil).Iter()
+	iter := db.C(c.Name).Find(nil).Select(bson.M{"text": 0}).Iter()
 
-	var f genericFile
+	var f DocumentFile
 	for iter.Next(&f) {
 		ents = append(ents, fuse.Dirent{Name: f.Id.Hex(), Type: fuse.DT_File})
 	}
