@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
@@ -19,7 +20,7 @@ type CollFile struct {
 func (f CollFile) Attr() fuse.Attr {
 	log.Printf("CollFile.Attr() for: %+v", f)
 
-	return collections[f.Name].Fattr
+	return fuse.Attr{Mode: os.ModeDir | 0400}
 }
 
 func (c CollFile) Lookup(fname string, intr fs.Intr) (fs.Node, fuse.Error) {

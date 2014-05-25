@@ -12,16 +12,12 @@ func mount(point string) {
 
 	// startup mount
 	c, err := fuse.Mount(point)
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkFatal(err)
 	defer c.Close()
 
 	log.Println("Mounted: ", point)
 	err = fs.Serve(c, mgoFS{})
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkFatal(err)
 
 	// check if the mount process has an error to report
 	<-c.Ready
@@ -49,22 +45,39 @@ func (d Dir) Attr() fuse.Attr {
 func (Dir) Lookup(name string, intr fs.Intr) (fs.Node, fuse.Error) {
 	log.Println("Dir.Lookup():", name)
 
-	coll, ok := collections[name]
-	if !ok {
-		// might be..?
-		return nil, fuse.ENOENT
+	db, s := getDb()
+	defer s.Close()
 
+	names, err := db.CollectionNames()
+	if err != nil {
+		logErr(err)
+		return nil, fuse.EIO
 	}
 
-	return coll, nil
+	for _, collName := range names {
+		if collName == name {
+			return CollFile{Name: name}, nil
+		}
+	}
+
+	return nil, fuse.ENOENT
 }
 
 func (d Dir) ReadDir(intr fs.Intr) ([]fuse.Dirent, fuse.Error) {
 	log.Println("Dir.ReadDir():", d.name)
 
-	ents := make([]fuse.Dirent, 0, len(collections))
+	db, s := getDb()
+	defer s.Close()
 
-	for name, _ := range collections {
+	names, err := db.CollectionNames()
+	if err != nil {
+		logErr(err)
+		return nil, fuse.EIO
+	}
+
+	ents := make([]fuse.Dirent, 0, len(names))
+
+	for _, name := range names {
 		ents = append(ents, fuse.Dirent{Name: name, Type: fuse.DT_Dir})
 	}
 	return ents, nil
