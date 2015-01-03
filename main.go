@@ -16,8 +16,8 @@ func main() {
 	app.Version = "0.1"
 
 	app.Flags = []cli.Flag{
-		cli.BoolFlag{"verbose", "verbose logging"},
-		cli.StringFlag{"dbhost, d", "localhost", "the mongodb host to connect to"},
+		cli.BoolFlag{Name: "verbose", Usage: "verbose logging"},
+		cli.StringFlag{Name: "dbhost, d", Value: "localhost", Usage: "the mongodb host to connect to"},
 	}
 
 	app.Action = func(c *cli.Context) {
