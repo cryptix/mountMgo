@@ -2,12 +2,13 @@
 package main
 
 import (
-	"io/ioutil"
-	"log"
 	"os"
 
 	"github.com/codegangsta/cli"
+	"github.com/cryptix/go/logging"
 )
+
+var slog = logging.Logger("mountMgo")
 
 func main() {
 	app := cli.NewApp()
@@ -16,18 +17,13 @@ func main() {
 	app.Version = "0.1"
 
 	app.Flags = []cli.Flag{
-		cli.BoolFlag{Name: "verbose", Usage: "verbose logging"},
 		cli.StringFlag{Name: "dbhost, d", Value: "localhost", Usage: "the mongodb host to connect to"},
 	}
 
 	app.Action = func(c *cli.Context) {
 
 		if len(c.Args()) != 2 {
-			log.Fatal("Usage: mountMgo <dbname> <mountpoint>")
-		}
-
-		if !c.Bool("verbose") {
-			log.SetOutput(ioutil.Discard)
+			slog.Fatal("Usage: mountMgo <dbname> <mountpoint>")
 		}
 
 		dbName := c.Args()[0]

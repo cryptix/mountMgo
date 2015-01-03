@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"time"
 
 	"bazil.org/fuse"
@@ -20,7 +19,7 @@ type DocumentFile struct {
 }
 
 func (d DocumentFile) Attr() fuse.Attr {
-	log.Printf("DocumentFile.Attr() for: %+v", d)
+	slog.Noticef("DocumentFile.Attr() for: %+v", d)
 
 	now := time.Now()
 	return fuse.Attr{
@@ -33,13 +32,13 @@ func (d DocumentFile) Attr() fuse.Attr {
 }
 
 func (d DocumentFile) Lookup(fname string, intr fs.Intr) (fs.Node, fuse.Error) {
-	log.Printf("DocumentFile[%s].Lookup(): %s\n", d.coll, fname)
+	slog.Noticef("DocumentFile[%s].Lookup(): %s\n", d.coll, fname)
 
 	return nil, fuse.ENOENT
 }
 
 func (d DocumentFile) ReadAll(intr fs.Intr) ([]byte, fuse.Error) {
-	log.Printf("DocumentFile[%s].ReadAll(): %s\n", d.coll, d.Id)
+	slog.Noticef("DocumentFile[%s].ReadAll(): %s\n", d.coll, d.Id)
 
 	db, s := getDb()
 	defer s.Close()
@@ -47,13 +46,13 @@ func (d DocumentFile) ReadAll(intr fs.Intr) ([]byte, fuse.Error) {
 	var f interface{}
 	err := db.C(d.coll).FindId(d.Id).One(&f)
 	if err != nil {
-		logErr(err)
+		slog.Error(err)
 		return nil, fuse.EIO
 	}
 
 	buf, err := json.MarshalIndent(f, "", "    ")
 	if err != nil {
-		logErr(err)
+		slog.Error(err)
 		return nil, fuse.EIO
 	}
 

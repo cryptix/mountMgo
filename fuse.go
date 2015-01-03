@@ -1,34 +1,34 @@
 package main
 
 import (
-	"log"
 	"os"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
+	"github.com/cryptix/go/logging"
 )
 
 func mount(point string) {
 
 	// startup mount
 	c, err := fuse.Mount(point)
-	checkFatal(err)
+	logging.CheckFatal(err)
 	defer c.Close()
 
-	log.Println("Mounted: ", point)
+	slog.Noticef("Mounted: ", point)
 	err = fs.Serve(c, mgoFS{})
-	checkFatal(err)
+	logging.CheckFatal(err)
 
 	// check if the mount process has an error to report
 	<-c.Ready
-	checkFatal(c.MountError)
+	logging.CheckFatal(c.MountError)
 }
 
 // mgoFS implements my mgo fuse filesystem
 type mgoFS struct{}
 
 func (mgoFS) Root() (fs.Node, fuse.Error) {
-	log.Println("returning root node")
+	slog.Noticef("returning root node")
 	return Dir{"Root"}, nil
 }
 
@@ -38,19 +38,19 @@ type Dir struct {
 }
 
 func (d Dir) Attr() fuse.Attr {
-	log.Println("Dir.Attr() for ", d.name)
+	slog.Noticef("Dir.Attr() for ", d.name)
 	return fuse.Attr{Inode: 1, Mode: os.ModeDir | 0555}
 }
 
 func (Dir) Lookup(name string, intr fs.Intr) (fs.Node, fuse.Error) {
-	log.Println("Dir.Lookup():", name)
+	slog.Noticef("Dir.Lookup():", name)
 
 	db, s := getDb()
 	defer s.Close()
 
 	names, err := db.CollectionNames()
 	if err != nil {
-		logErr(err)
+		slog.Error(err)
 		return nil, fuse.EIO
 	}
 
@@ -64,14 +64,14 @@ func (Dir) Lookup(name string, intr fs.Intr) (fs.Node, fuse.Error) {
 }
 
 func (d Dir) ReadDir(intr fs.Intr) ([]fuse.Dirent, fuse.Error) {
-	log.Println("Dir.ReadDir():", d.name)
+	slog.Noticef("Dir.ReadDir():", d.name)
 
 	db, s := getDb()
 	defer s.Close()
 
 	names, err := db.CollectionNames()
 	if err != nil {
-		logErr(err)
+		slog.Error(err)
 		return nil, fuse.EIO
 	}
 

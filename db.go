@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	"labix.org/v2/mgo"
 )
@@ -10,13 +9,13 @@ import (
 var getDb func() (*mgo.Database, *mgo.Session)
 
 func initDb(dbHost, dbName string) {
-	var err error
-
 	url := fmt.Sprintf("mongodb://%s/%s", dbHost, dbName)
 	mgoSession, err := mgo.Dial(url)
-	checkFatal(err)
+	if err != nil {
+		slog.Fatal(err)
+	}
 
-	log.Println("Dialed:", url)
+	slog.Info("Dialed:", url)
 
 	getDb = func() (*mgo.Database, *mgo.Session) {
 		s := mgoSession.Clone()

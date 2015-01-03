@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 
 	"bazil.org/fuse"
@@ -18,13 +17,13 @@ type CollFile struct {
 }
 
 func (f CollFile) Attr() fuse.Attr {
-	log.Printf("CollFile.Attr() for: %+v", f)
+	slog.Noticef("CollFile.Attr() for: %+v", f)
 
 	return fuse.Attr{Mode: os.ModeDir | 0400}
 }
 
 func (c CollFile) Lookup(fname string, intr fs.Intr) (fs.Node, fuse.Error) {
-	log.Printf("CollFile[%s].Lookup(): %s\n", c.Name, fname)
+	slog.Noticef("CollFile[%s].Lookup(): %s\n", c.Name, fname)
 
 	if !bson.IsObjectIdHex(fname) {
 		return nil, fuse.ENOENT
@@ -36,7 +35,7 @@ func (c CollFile) Lookup(fname string, intr fs.Intr) (fs.Node, fuse.Error) {
 	var f DocumentFile
 	err := db.C(c.Name).FindId(bson.ObjectIdHex(fname)).One(&f)
 	if err != nil {
-		logErr(err)
+		slog.Error(err)
 		return nil, fuse.EIO
 	}
 
@@ -46,7 +45,7 @@ func (c CollFile) Lookup(fname string, intr fs.Intr) (fs.Node, fuse.Error) {
 }
 
 func (c CollFile) ReadDir(intr fs.Intr) (ents []fuse.Dirent, ferr fuse.Error) {
-	log.Println("CollFile.ReadDir():", c.Name)
+	slog.Notice("CollFile.ReadDir():", c.Name)
 
 	db, s := getDb()
 	defer s.Close()
@@ -59,7 +58,7 @@ func (c CollFile) ReadDir(intr fs.Intr) (ents []fuse.Dirent, ferr fuse.Error) {
 	}
 
 	if err := iter.Err(); err != nil {
-		logErr(err)
+		slog.Error(err)
 		return nil, fuse.EIO
 	}
 
